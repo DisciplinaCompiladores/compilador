@@ -1,0 +1,13 @@
+programa
+int
+boolean
+func
+begin
+end
+return
+if
+else
+while
+break
+continue
+print
