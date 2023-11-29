@@ -1,0 +1,6 @@
+int x;
+boolean b;
+begin.
+x = 10;
+b = True;
+end
