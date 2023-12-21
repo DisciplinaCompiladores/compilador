@@ -191,10 +191,10 @@ class AnalisadorSintatico:
     def escrita(self):
         self.match('PRINT')
         self.match('(')
-        if self.tokens[self.posicao]['tipo'] == '\'':
-            self.match('\'')
-            self.identificador()
-            self.match('\'')
+        if self.tokens[self.posicao]['tipo'] == 'NUMERO':
+            self.fator()
+            self.match(')')
+            self.match(';')
         else:
             self.expressao()
         self.match(')')
