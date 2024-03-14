@@ -46,14 +46,26 @@ class CodigoTresEnderecos:
                             if self.tokens[posicao + 3]['tipo'] == '(':
                                 for posicao, token in enumerate(self.tokens[posicao + 3:], start=posicao + 3):
                                     if self.tokens[posicao]['tipo'] != ')':
-                                        if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
+                                        if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR' and self.tokens[posicao - 1]['tipo'] != 'RETURN':
                                             # Adiciona uma variavel no contador
                                             contador += 1
                                             arquivo.write('param ' + str(self.tokens[posicao]['valor']) + '\n')
 
                                     else:
+                                        print(self.tokens[posicao]['valor'])
+                                        for posicao, token in enumerate(self.tokens[posicao:], start=posicao):
 
-                                        break
+
+                                            if self.tokens[posicao]['tipo'] != 'RETURN':
+                                                print(token['valor'])
+                                            elif self.tokens[posicao]['tipo'] == 'RETURN':
+                                                arquivo.write('return ')
+                                                for posicao, token in enumerate(self.tokens[posicao:], start=posicao):
+                                                    if self.tokens[posicao]['tipo'] != ';':
+                                                        if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
+                                                            arquivo.write(str(self.tokens[posicao]['valor']+ '\n'))
+                                                    else:
+                                                        break
 
 
 
