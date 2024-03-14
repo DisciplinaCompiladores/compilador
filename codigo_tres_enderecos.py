@@ -14,6 +14,7 @@ class CodigoTresEnderecos:
     def salvar_codigo_tres_enderecos(self, nome_arquivo):
 
         contador = 0;
+        rotulo_count = 0
 
 
         with open(nome_arquivo, 'w') as arquivo:
@@ -113,20 +114,133 @@ class CodigoTresEnderecos:
 
                                         break
 
-                        # Chamada de Funcão
-                        elif self.tokens[posicao + 2]['tipo'] == 'IDENTIFICADOR' and self.tokens[posicao - 1]['tipo'] not in ['INT', 'BOOLEAN']:
-                            nome_funcao = self.tokens[posicao + 2]['valor']
-                            if self.tokens[posicao + 3]['tipo'] == '(':
-                                for posicao, token in enumerate(self.tokens[posicao + 3:], start=posicao + 3):
-                                    if self.tokens[posicao]['tipo'] != ')':
-                                        if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
-                                            # Adiciona uma variavel no contador
-                                            contador += 1
-                                            arquivo.write('param ' + str(self.tokens[posicao]['valor']) + '\n')
-                                    else:
-                                        arquivo.write(f'call {nome_funcao}, {contador}  \n')
-                                        contador = 0
-                                        break
+                # Chamada de Funcão
+                elif posicao + 2 < len(self.tokens) and self.tokens[posicao + 2]['tipo'] == 'IDENTIFICADOR' and self.tokens[posicao - 1]['tipo'] not in ['INT', 'BOOLEAN']:
+                    nome_funcao = self.tokens[posicao + 2]['valor']
+                    if self.tokens[posicao + 3]['tipo'] == '(':
+                        for posicao, token in enumerate(self.tokens[posicao + 3:], start=posicao + 3):
+                            if self.tokens[posicao]['tipo'] != ')':
+                                if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
+                                    # Adiciona uma variavel no contador
+                                    contador += 1
+                                    arquivo.write('param ' + str(self.tokens[posicao]['valor']) + '\n')
+                            else:
+                                arquivo.write(f'call {nome_funcao}, {contador}  \n')
+                                contador = 0
+                                break
+                # Verifica comando condicional (if ou while)F
+                elif self.tokens[posicao]['tipo'] in ['IF', 'WHILE']:
+                    if self.tokens[posicao]['tipo'] == 'IF':
+                        posicao = self.processa_condicional(
+                            posicao, arquivo, rotulo_count)
+                    elif self.tokens[posicao]['tipo'] == 'WHILE':
+                        posicao = self.processa_while(
+                            posicao, arquivo, rotulo_count)
+                    rotulo_count += 2
+
+                # Verifica comando de impressão (print)
+                elif self.tokens[posicao]['tipo'] == 'PRINT':
+                    arquivo.write("\n" + "print " +
+                                  self.tokens[posicao + 2]['valor'] + "\n")
+
+                # Verifica chamada de procedimento
+                elif self.tokens[posicao]['tipo'] == 'CHAMADA_PROCEDIMENTO':
+                    self.chamada_de_procedimento(arquivo)
+
+                # Verifica declaração de procedimento
+                elif self.tokens[posicao]['tipo'] == 'DECLARACAO_PROCEDIMENTO':
+                    self.declaracao_procedimento(posicao, arquivo)
+
+                # Avança para o próximo token
+                posicao += 1
+
+    def processa_condicional(self, posicao, arquivo, rotulo_count):
+        # Lê o token "if"
+        posicao += 1
+        token = self.tokens[posicao]
+
+        # Lê a condição do "if"
+        condicao = ""
+        while self.tokens[posicao]['valor'] != ";":
+            condicao += self.tokens[posicao]['valor'] + " "
+            posicao += 1
+
+        # Remove o último espaço extra
+        condicao = condicao[:-1]
+
+        # Escreve a condição do "if"
+        arquivo.write("if " + condicao + " goto L" + str(rotulo_count) + "\n")
+        arquivo.write("goto L" + str(rotulo_count + 1) + "\n")
+        arquivo.write("L" + str(rotulo_count) + ":\n")
+
+        # Encontra o início do bloco do "if" ou "while"
+        while self.tokens[posicao]['valor'] != "begin":
+            posicao += 1
+
+        # Processa o bloco do "if" ou "while"
+        self.processa_bloco(posicao, arquivo)
+
+        arquivo.write("L" + str(rotulo_count + 1) + ":\n")
+
+        return posicao
+
+    def processa_while(self, posicao, arquivo, rotulo_count):
+        # Lê o token "while"
+        posicao += 1
+
+        # Lê a condição do "while"
+        condicao = ""
+        while self.tokens[posicao]['valor'] != ";":
+            condicao += self.tokens[posicao]['valor'] + " "
+            posicao += 1
+
+        # Remove o último espaço extra
+        condicao = condicao[:-1]
+
+        # Escreve a condição do "while"
+        arquivo.write("L" + str(rotulo_count) + ":\n")
+        arquivo.write("if " + condicao + " goto L" +
+                      str(rotulo_count + 1) + "\n")
+        arquivo.write("goto L" + str(rotulo_count + 1) + "\n")
+        arquivo.write("L" + str(rotulo_count + 1) + ":\n")
+
+        # Encontra o início do bloco do "while"
+        while self.tokens[posicao]['valor'] != "begin":
+            posicao += 1
+
+        # Processa o bloco do "while"
+        self.processa_bloco(posicao, arquivo)
+
+        arquivo.write("goto L" + str(rotulo_count) + "\n")
+
+        return posicao
+
+    def declaracao_procedimento(self, posicao, arquivo):
+        arquivo.write('proc ' + str(self.tokens[posicao]['valor']) + ' ')
+        posicao += 1
+        while self.tokens[posicao]['tipo'] != 'BEGIN':
+            if self.tokens[posicao]['tipo'] in ['NUMERO', 'IDENTIFICADOR']:
+                arquivo.write(str(self.tokens[posicao]['valor']) + ' ')
+            posicao += 1
+        arquivo.write('\n')
+
+    def chamada_de_procedimento(self, posicao, arquivo):
+        arquivo.write('call ' + str(self.tokens[posicao]['valor']) + ' ')
+        posicao += 1
+        while self.tokens[posicao]['tipo'] != ';':
+            if self.tokens[posicao]['tipo'] in ['NUMERO', 'IDENTIFICADOR']:
+                arquivo.write(str(self.tokens[posicao]['valor']) + ' ')
+            posicao += 1
+        arquivo.write('\n')
+
+    def processa_bloco(self, posicao, arquivo):
+        # Lê tokens até encontrar o fim do bloco
+        while self.tokens[posicao]['valor'] != "end":
+            # Se encontrar uma variável, escreve seu nome
+            if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
+                arquivo.write(self.tokens[posicao]['valor'])
+            posicao += 1
+
     def carrega_codigo(self):
         self.salvar_codigo_tres_enderecos(self.nome_arquivo)
 
@@ -139,7 +253,7 @@ class CodigoTresEnderecos:
 
 
 
-codigo = "exemplo_codigo/escrita.txt"
+codigo = "exemplo_codigo/atribuicao.txt"
 
 # Carrega o código de um arquivo TXT
 programa_exemplo = AnalisadorLexico(codigo)
