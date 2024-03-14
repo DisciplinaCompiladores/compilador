@@ -4,16 +4,17 @@ int b;
 int c;
 a = 10;
 b = 15;
-c = a + b;
+c = a + b - c;
 print(c);
 
 int func declaracao_funcao(int a);
 begin
+
 int a;
 return a;
 end
 
-a = declaracao_funcao(int a);
+int a = declaracao_funcao(int a);
 
 b = chamada_funcao(int a);
 c = chamada_funcao(int a, int b);
@@ -21,7 +22,9 @@ a = chamada_funcao(int a, int b, int c);
 
 declaracao_procedimento(int a);
 begin
+
 int a;
+
 end
 
 chamada_procedimento(int a);
@@ -30,15 +33,19 @@ chamada_procedimento(int a, int b, int c);
 
 if(a >= b);
 begin
+
 int a;
+
 end
 else;
 begin
+
 int b;
 end
 
 while(a > b);
 begin
+
 int a;
 end
 
