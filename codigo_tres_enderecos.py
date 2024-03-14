@@ -21,19 +21,20 @@ class CodigoTresEnderecos:
 
                 # Verifica inicialização de variável
                 if self.tokens[posicao]['tipo'] in ['INT', 'BOOLEAN']:
-                    if self.tokens[posicao + 1]['tipo'] == 'IDENTIFICADOR':
+                    if self.tokens[posicao + 1]['tipo'] == 'IDENTIFICADOR' and self.tokens[posicao + 2]['tipo'] == '(':
                         arquivo.write(str(self.tokens[posicao + 1]['valor']) + '\n')
                     elif self.tokens[posicao + 1]['tipo'] == 'FUNC':
                         if self.tokens[posicao + 2]['tipo'] == 'IDENTIFICADOR':
-                            if self.tokens[posicao + 2]['tipo'] == '(':
-                                for posicao, token in enumerate(self.tokens[posicao + 2:], start=posicao + 2):
+                            nome_funcao = self.tokens[posicao + 2]['valor']
+                            if self.tokens[posicao + 3]['tipo'] == '(':
+                                for posicao, token in enumerate(self.tokens[posicao + 3:], start=posicao + 3):
                                     if self.tokens[posicao]['tipo'] != ')':
-                                        # Adiciona uma variavel no contador
-                                        contador += 1
-                                        # Adiciona as variaveis ao vetor
-                                        self.temporarios.append(self.tokens[posicao]['valor'])
-                                        arquivo.write('param ' + str(self.tokens[posicao]['valor']) + '\n')
+                                        if self.tokens[posicao]['tipo'] == 'IDENTIFICADOR':
+                                            # Adiciona uma variavel no contador
+                                            contador += 1
+                                            arquivo.write('param ' + str(self.tokens[posicao]['valor']) + '\n')
                                     else:
+                                        arquivo.write(f'call {nome_funcao}, {contador}  \n')
                                         break
 
 
@@ -46,8 +47,6 @@ class CodigoTresEnderecos:
                                 arquivo.write(str(self.tokens[posicao]['valor']) + ' = ' + str(self.tokens[posicao + 2]['valor']) + '\n')
                             # Verifica atribuição de variável
                             elif self.tokens[posicao + 3]['tipo'] == 'OP_ARITMETICO':
-                                # Adiciona uma variavel no contador
-                                contador += 2
                                 # Adiciona as variaveis ao vetor
                                 self.temporarios.append(self.tokens[posicao + 2]['valor'])
                                 self.temporarios.append(self.tokens[posicao + 3]['valor'])
@@ -56,8 +55,6 @@ class CodigoTresEnderecos:
                                 for posicao, token in enumerate(self.tokens[posicao + 4:], start=posicao + 4):
 
                                     if self.tokens[posicao]['tipo'] != ';':
-                                        # Adiciona uma variavel no contador
-                                        contador += 1
                                         # Adiciona as variaveis ao vetor
                                         self.temporarios.append(self.tokens[posicao]['valor'])
                                         arquivo.write(' ' + str(self.tokens[posicao]['valor']))
@@ -81,6 +78,8 @@ class CodigoTresEnderecos:
                                             print(self.temporarios)
                                             valor_temp += 1
                                         self.temporarios = []
+                                        arquivo.write('\n')
+
                                         break
 
     def carrega_codigo(self):
@@ -95,7 +94,7 @@ class CodigoTresEnderecos:
 
 
 
-codigo = "exemplo_codigo/escrita.txt"
+codigo = "exemplo_codigo/atribuicao.txt"
 
 # Carrega o código de um arquivo TXT
 programa_exemplo = AnalisadorLexico(codigo)
